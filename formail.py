@@ -42,7 +42,7 @@ class Formail():
         f = 'get_email_address'
         kwargs['f'] = f
         response = self.session.get(self.api_url, params=kwargs)
-        return response.json()['email_address']
+        return response.json()['email_addr']
 
     # Set an email address
     def set_email_address(self, user):

@@ -152,7 +152,7 @@ class Formail():
 
 if __name__ == '__main__':
     # Example usage
-    user = 'uflkhlzg'
+    user = 'gjkxzvfu'
     formail = Formail()
     formail.set_email_address(user)
     domain = 'ar15.com'

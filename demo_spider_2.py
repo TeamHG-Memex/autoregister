@@ -163,6 +163,7 @@ class Spider():
                     verify_link = self.get_verify_link(domain)
                     time.sleep(5)
                 self.browser.get(verify_link)
+                logged_in = True
 
     def get_verify_link(self, domain):
         self.formail.set_email_address(self.user)

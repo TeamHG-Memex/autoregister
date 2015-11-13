@@ -1,16 +1,17 @@
 lk__author__ = 'punk'
 import lxml
+from lxml import etree
 from formasaurus import FormExtractor
 import requests
+from registration_form import RegistrationForm
 
 class RegistrationFormFiller(object):
 
-    def __init__(self, url):
+    def __init__(self, html_in = None, url = None):
         #!needs to take in html
         #words/phrases to check against that indicate that a field
         #is a certain type of field, we'll add to this as we add to
         #forms. This should be checked against field names and placeholders
-        #
 
         self.keywords_dic = {
             "email" : ["user[email]", "email"],
@@ -20,29 +21,39 @@ class RegistrationFormFiller(object):
             "password_confirmation" : ["user[password_confirmation]"],
         }
 
-        self.url = url
+        self.html_in = html_in
+
+        if not self.html_in:
+            r = requests.get(url)
+            self.html_in = r.text
+
+        print self.html_in
+
         self.fe = FormExtractor.load()
-        self.form = self._extract_forms_and_types(url)
+        self.form = self._extract_forms_and_types(self.html_in)
         self.action = self.form.action
         self.inputs = self._get_inputs()
         self.filled_inputs = None
         self.filled_form = RegistrationForm()
 
-    def _extract_forms_and_types(self, url):
+    def _extract_forms_and_types(self, html_in):
 
-        r = requests.get(url)
-        tree = lxml.html.fromstring(r.text)
-        form = self.fe.extract_forms(tree)
+        self.tree = lxml.html.fromstring(html_in)
+        form = self.fe.extract_forms(self.tree)
 
         return form[0][0]
 
     def _get_inputs(self):
 
         input_dics = []
+        self.some_tree = self.tree.getroottree()
         for child in self.form.xpath("//input"):
             input_dic = {}
             for k,v in child.items():
                 input_dic[k] = v
+            #get xpath
+            input_xpath = self.some_tree.getpath(child)
+            input_dic["xpath"] = input_xpath
             input_dics.append(input_dic)
 
         return input_dics
@@ -127,7 +138,7 @@ class RegistrationFormFiller(object):
 if __name__ == "__main__":
 
     import json
-    ff = RegistrationFormFiller("https://auth.getpebble.com/users/sign_up")
+    ff = RegistrationFormFiller(url = "https://auth.getpebble.com/users/sign_up")
     print json.dumps(ff.fill_form())
 
 

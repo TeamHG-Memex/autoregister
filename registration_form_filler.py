@@ -6,6 +6,36 @@ import requests
 from registration_form import RegistrationForm
 
 class RegistrationFormFiller(object):
+    """
+    Automatically fills registration forms by detecting field types and providing appropriate values.
+    
+    This class uses formasaurus to extract forms from HTML, detects field types based on
+    field names and placeholders, and fills them with appropriate dummy values for testing
+    registration flows.
+    
+    Attributes:
+        keywords_dic (dict): Keywords used to identify field types
+        html_in (str): The HTML content containing the registration form
+        fe (FormExtractor): Formasaurus form extractor instance
+        form: The extracted form element
+        action (str): The form's action URL
+        inputs (list): List of input fields extracted from the form
+        filled_inputs (list): List of inputs with filled values
+        filled_form (RegistrationForm): RegistrationForm object with filled data
+    
+    Example:
+        >>> # Using with a URL
+        >>> filler = RegistrationFormFiller(url='https://example.com/register')
+        >>> form_data = filler.fill_form()
+        >>> 
+        >>> # Using with HTML content
+        >>> html = '<form><input name="email" type="email"></form>'
+        >>> filler = RegistrationFormFiller(html_in=html)
+        >>> form_data = filler.fill_form()
+        >>> 
+        >>> # Submit via HTTP POST
+        >>> response = filler.submit_form(base_url='https://example.com')
+    """
 
     def __init__(self, html_in = None, url = None):
         #!needs to take in html
@@ -114,6 +144,28 @@ class RegistrationFormFiller(object):
         return self.filled_form.attribute_dict
 
     def fill_form(self):
+        """
+        Detect field types and fill the form with appropriate dummy values.
+        
+        This method:
+        1. Detects input field types (email, password, name, etc.)
+        2. Fills each field with appropriate dummy values
+        3. Populates the internal RegistrationForm object
+        4. Returns a list of filled inputs suitable for Selenium automation
+        
+        Returns:
+            list: List of dictionaries, each representing a filled input field
+                  with keys like 'name', 'type', 'value', 'xpath', 'detected_type'
+        
+        Example:
+            >>> filler = RegistrationFormFiller(url='https://example.com/register')
+            >>> filled_data = filler.fill_form()
+            >>> # Use with Selenium
+            >>> for field in filled_data:
+            ...     if 'value' in field and 'xpath' in field:
+            ...         element = driver.find_element_by_xpath(field['xpath'])
+            ...         element.send_keys(field['value'])
+        """
 
         self._detect_input_types()
 
@@ -186,8 +238,35 @@ class RegistrationFormFiller(object):
 if __name__ == "__main__":
 
     import json
+    
+    # Example 1: Fill form and get data as list (for Selenium)
+    print "=" * 50
+    print "Example 1: Get filled form data as list"
+    print "=" * 50
     ff = RegistrationFormFiller(url = "https://auth.getpebble.com/users/sign_up")
-    print json.dumps(ff.fill_form())
+    form_data_list = ff.fill_form()
+    print json.dumps(form_data_list, indent=2)
+    
+    # Example 2: Get form data as POST dictionary
+    print "\n" + "=" * 50
+    print "Example 2: Get form data as POST dictionary"
+    print "=" * 50
+    post_data = ff.get_form_as_post_data()
+    print json.dumps(post_data, indent=2)
+    
+    # Example 3: Get form action URL
+    print "\n" + "=" * 50
+    print "Example 3: Form action URL"
+    print "=" * 50
+    print "Form will be submitted to:", ff.action
+    
+    # Example 4: Submit form automatically (commented out to avoid actual submission)
+    print "\n" + "=" * 50
+    print "Example 4: Auto-submit (commented out)"
+    print "=" * 50
+    print "# To submit the form automatically:"
+    print "# response = ff.submit_form(base_url='https://auth.getpebble.com')"
+    print "# print response.status_code"
 
 
     #form = extract_forms_and_types("https://auth.getpebble.com/users/sign_up")[0][0]

@@ -1,4 +1,4 @@
-lk__author__ = 'punk'
+__author__ = 'punk'
 import lxml
 from lxml import etree
 from formasaurus import FormExtractor
@@ -132,8 +132,56 @@ class RegistrationFormFiller(object):
                     input["value"] = "r@nd0mP@ssw0rd"
 
             filled_inputs.append(input)
+            
+            # Populate the RegistrationForm object
+            if "name" in input and "value" in input:
+                self.filled_form.add_attribute(input["name"], input["value"])
 
         return filled_inputs
+    
+    def get_form_as_post_data(self):
+        """
+        Get the filled form data as a dictionary suitable for POST requests.
+        Calls fill_form() if not already called, then returns the POST data.
+        """
+        if not self.filled_inputs:
+            self.filled_inputs = self.fill_form()
+        return self.filled_form.get_as_raw_post()
+    
+    def submit_form(self, base_url=None):
+        """
+        Submit the filled form via HTTP POST.
+        
+        Args:
+            base_url: Base URL to use if form action is relative. If None, 
+                     uses the URL passed to __init__.
+        
+        Returns:
+            requests.Response object
+        """
+        if not self.filled_inputs:
+            self.filled_inputs = self.fill_form()
+        
+        post_data = self.get_form_as_post_data()
+        
+        # Determine the submission URL
+        action = self.action
+        if action.startswith('http'):
+            submit_url = action
+        elif action.startswith('/'):
+            # Absolute path - need base URL
+            if not base_url:
+                raise ValueError("Form action is absolute path but no base_url provided")
+            submit_url = base_url.rstrip('/') + action
+        else:
+            # Relative path
+            if not base_url:
+                raise ValueError("Form action is relative but no base_url provided")
+            submit_url = base_url.rstrip('/') + '/' + action
+        
+        # Submit the form
+        response = requests.post(submit_url, data=post_data)
+        return response
 
 if __name__ == "__main__":
 

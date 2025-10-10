@@ -7,4 +7,7 @@ class RegistrationForm(object):
         self.attribute_dict[name] = value
 
     def get_as_raw_post(self):
-        pass
+        """
+        Return the form data as a dictionary suitable for POST requests.
+        """
+        return self.attribute_dict
